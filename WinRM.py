@@ -23,6 +23,7 @@ class WinRMConnector:
     shell = None
     shell_id = None
     token = None
+    smb = None
 
     def __init__(self, port=5986, secure=True):
         self.port = port
@@ -144,6 +145,20 @@ class WinRMConnector:
         return std_out.decode("utf-8") + std_err.decode("utf-8")
 
     def send_file(self, local_path, remote_path):
+        smb = self.get_smb_connection()
+        smb.upload(local_path, remote_path)
+        return True
+
+    def get_file(self, local_path, remote_path):
+        smb = self.get_smb_connection()
+        smb.download(remote_path, local_path)
+        return True
+
+    def get_smb_connection(self):
+        if self.smb is None:
+            self.connect_smb()
+        return self.smb
+
+    def connect_smb(self, share="C$"):
         os.environ["KRB5CCNAME"] = self.path
-        smb = smbclient.SambaClient(server=self.fqdn.upper(), share="C$", kerberos=True, domain=self.domain)
-        return smb.listdir("/")
+        self.smb = smbclient.SambaClient(server=self.fqdn.upper(), share=share, kerberos=True, domain=self.domain)

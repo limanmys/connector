@@ -9,6 +9,7 @@ class SSHConnector:
     port = None
     shell = None
     token = None
+    ftp = None
 
     def __init__(self, port=22):
         self.port = port
@@ -33,7 +34,6 @@ class SSHConnector:
 
         # Generate Random Token
         self.token = token_hex(16)
-        print(self.token)
 
     def get_token(self):
         return self.token
@@ -41,3 +41,18 @@ class SSHConnector:
     def execute(self, command):
         stdin, stdout, stderr = self.shell.exec_command(command)
         return stdout.read().decode('ascii') + stderr.read().decode('ascii')
+
+    def send_file(self, local_path, remote_path):
+        sftp = self.get_sftp()
+        sftp.put(local_path, remote_path)
+        return True
+
+    def get_file(self, local_path, remote_path):
+        sftp = self.get_sftp()
+        sftp.get(remote_path, local_path)
+        return True
+
+    def get_sftp(self):
+        if self.ftp is None:
+            self.ftp = self.shell.open_sftp()
+        return self.ftp

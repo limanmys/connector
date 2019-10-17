@@ -76,27 +76,40 @@ def verify_token():
 @app.route("/send", methods=['POST'])
 def send_file():
     token = request.values.get("token")
-    path = request.values.get("path")
+    local_path = request.values.get("local_path")
+    remote_path = request.values.get("remote_path")
     try:
         connection = connections[token]
     except Exception:
         return {"error": "Token Not found"}, 404
 
-    file = request.files['file']
-    random = token_hex(16)
-    file.save('/tmp/' + random)
-    connection.send_file('/tmp/' + random, path)
+    try:
+        flag = connection.send_file(local_path, remote_path)
+    except Exception as e:
+        flag = False
+    if flag is True:
+        return {"message": "ok"}, 200
+    else:
+        return {"message": "no"}, 201
 
 
-@app.route("/smb", methods=['POST'])
-def smb():
+@app.route("/get", methods=['POST'])
+def get_file():
     token = request.values.get("token")
+    local_path = request.values.get("local_path")
+    remote_path = request.values.get("remote_path")
     try:
         connection = connections[token]
     except Exception:
         return {"error": "Token Not found"}, 404
-    liste = connection.send_file("", "")
-    return liste
+    try:
+        flag = connection.get_file(local_path, remote_path)
+    except Exception as e:
+        flag = False
+    if flag is True:
+        return {"message": "ok"}, 200
+    else:
+        return {"message": "no"}, 201
 
 
 def cleanup():
