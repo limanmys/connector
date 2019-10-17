@@ -1,0 +1,24 @@
+Metadata-Version: 2.1
+Name: python-hosts
+Version: 0.4.7
+Summary: A hosts file manager library written in python
+Home-page: https://github.com/jonhadfield/python-hosts
+Author: Jon Hadfield
+Author-email: jon@lessknown.co.uk
+License: MIT
+Download-URL: https://github.com/jonhadfield/python-hosts/tarball/0.4.7
+Keywords: hosts,python,network
+Platform: any
+Classifier: Programming Language :: Python
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Natural Language :: English
+Classifier: Environment :: Console
+Classifier: Intended Audience :: System Administrators
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Topic :: System :: Operating System
+Classifier: Topic :: System :: Networking
+
+A hosts file manager library written in python
+
+

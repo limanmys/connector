@@ -1,0 +1,43 @@
+Metadata-Version: 2.0
+Name: pywinrm
+Version: 0.3.0
+Summary: Python library for Windows Remote Management
+Home-page: http://github.com/diyan/pywinrm/
+Author: Alexey Diyan
+Author-email: alexey.diyan@gmail.com
+License: MIT license
+Description-Content-Type: UNKNOWN
+Keywords: winrm,ws-man,devops,ws-management
+Platform: UNKNOWN
+Classifier: Development Status :: 4 - Beta
+Classifier: Environment :: Console
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: System Administrators
+Classifier: Natural Language :: English
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 2
+Classifier: Programming Language :: Python :: 2.6
+Classifier: Programming Language :: Python :: 2.7
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.3
+Classifier: Programming Language :: Python :: 3.4
+Classifier: Programming Language :: Python :: 3.5
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: Implementation :: PyPy
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Topic :: System :: Clustering
+Classifier: Topic :: System :: Distributed Computing
+Classifier: Topic :: System :: Systems Administration
+Requires-Dist: xmltodict
+Requires-Dist: requests (>=2.9.1)
+Requires-Dist: requests-ntlm (>=0.3.0)
+Requires-Dist: six
+Provides-Extra: credssp
+Requires-Dist: requests-credssp (>=0.0.1); extra == 'credssp'
+Provides-Extra: kerberos
+Requires-Dist: requests-kerberos (>=0.10.0); extra == 'kerberos'
+
+UNKNOWN
+
+

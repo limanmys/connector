@@ -1,0 +1,116 @@
+from flask import Flask
+from flask import request
+from WinRM import WinRMConnector
+from SSH import SSHConnector
+from secrets import token_hex
+import os
+
+app = Flask("LIMAN")
+
+connections = {}
+
+
+@app.route("/new", methods=['POST'])
+def new_connection():
+
+    # Set Variables for easier access
+    username = request.values.get("username")
+    hostname = request.values.get("hostname")
+    password = request.values.get("password")
+    connection_type = request.values.get("connection_type")
+
+    # Validate Inputs.
+    if username is None or password is None or hostname is None or connection_type is None:
+        return {"error": "Missing Parameters"}, 400
+
+    if connection_type == "winrm":
+        connector = WinRMConnector()
+    elif connection_type == "ssh":
+        connector = SSHConnector()
+    else:
+        return {"error": "Unknown Type"}, 404
+
+    # Set Credentials
+    connector.set_credentials(username=username, password=password, hostname=hostname)
+
+    # Initialize Connector
+    connector.init()
+
+    # Retrieve Token
+    token = connector.get_token()
+
+    # Store Class
+    connections[token] = connector
+
+    # Simply return token to use
+    return {"token": token}, 200
+
+
+@app.route("/run", methods=['POST'])
+def execute_command():
+    command = request.values.get("command")
+    token = request.values.get("token")
+    try:
+        connection = connections[token]
+    except Exception:
+        return {"error": "Token Not found"}, 404
+
+    return {"output": connection.execute(command)}, 200
+
+
+@app.route("/verify", methods=['POST'])
+def verify_token():
+    token = request.values.get("token")
+    try:
+        connection = connections[token]
+    except Exception:
+        return {"error": "Token Not found"}, 404
+    try:
+        connection.execute("hostname")
+    except Exception:
+        del connections[token]
+        return {"error": "Kerberos Expired"}, 413
+    return {"message": "Token working"}, 200
+
+
+@app.route("/send", methods=['POST'])
+def send_file():
+    token = request.values.get("token")
+    path = request.values.get("path")
+    try:
+        connection = connections[token]
+    except Exception:
+        return {"error": "Token Not found"}, 404
+
+    file = request.files['file']
+    random = token_hex(16)
+    file.save('/tmp/' + random)
+    connection.send_file('/tmp/' + random, path)
+
+
+@app.route("/smb", methods=['POST'])
+def smb():
+    token = request.values.get("token")
+    try:
+        connection = connections[token]
+    except Exception:
+        return {"error": "Token Not found"}, 404
+    liste = connection.send_file("", "")
+    return liste
+
+
+def cleanup():
+    with open("/etc/krb5.conf", "w") as file:
+        file.write("""[libdefaults]
+    dns_lookup_realm = false
+    dns_lookup_kdc = false
+[realms]
+         
+[domain_realm]
+        
+""")
+
+
+if __name__ == "__main__":
+    cleanup()
+    app.run(host='127.0.0.1')
