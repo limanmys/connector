@@ -88,9 +88,9 @@ def send_file():
     except Exception as e:
         flag = False
     if flag is True:
-        return {"message": "ok"}, 200
+        return {"output": "ok"}, 200
     else:
-        return {"message": "no"}, 201
+        return {"output": "no"}, 201
 
 
 @app.route("/get", methods=['POST'])
@@ -107,9 +107,9 @@ def get_file():
     except Exception as e:
         flag = False
     if flag is True:
-        return {"message": "ok"}, 200
+        return {"output": "ok"}, 200
     else:
-        return {"message": "no"}, 201
+        return {"output": "no"}, 201
 
 
 def cleanup():
