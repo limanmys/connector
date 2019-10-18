@@ -6,6 +6,7 @@ import ldap
 import smbclient
 from secrets import token_hex
 from winrm.protocol import Protocol
+import winrm
 
 HOSTS_FILE = "/etc/hosts"
 KRB5_FILE = "/etc/krb5.conf"
@@ -109,6 +110,12 @@ class WinRMConnector:
 
         # Delete Password
         self.password = None
+
+        # Set Up kvno for samba share
+        os.system("kvno cifs/" + self.fqdn.upper() + "@" + self.domain.upper())
+
+        # Set Up kvno for hosts.
+        os.system("kvno host/" + self.fqdn.upper() + "@" + self.domain.upper())
 
         if result.stderr:
             return False, result.stderr.decode("UTF-8")

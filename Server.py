@@ -3,7 +3,6 @@ from flask import request
 from WinRM import WinRMConnector
 from SSH import SSHConnector
 from secrets import token_hex
-import os
 
 app = Flask("LIMAN")
 
@@ -82,10 +81,10 @@ def send_file():
         connection = connections[token]
     except Exception:
         return {"error": "Token Not found"}, 404
-
     try:
         flag = connection.send_file(local_path, remote_path)
     except Exception as e:
+        print(str(e))
         flag = False
     if flag is True:
         return {"output": "ok"}, 200
@@ -126,4 +125,4 @@ def cleanup():
 
 if __name__ == "__main__":
     cleanup()
-    app.run(host='127.0.0.1')
+    app.run(host='0.0.0.0')
