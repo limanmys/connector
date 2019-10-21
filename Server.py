@@ -2,7 +2,6 @@ from flask import Flask
 from flask import request
 from WinRM import WinRMConnector
 from SSH import SSHConnector
-from secrets import token_hex
 
 app = Flask("LIMAN")
 

@@ -40,7 +40,10 @@ class SSHConnector:
 
     def execute(self, command):
         stdin, stdout, stderr = self.shell.exec_command(command)
-        return stdout.read().decode('ascii') + stderr.read().decode('ascii')
+        try:
+            return stdout.read().decode('ascii') + stderr.read().decode('ascii')
+        except Exception as e:
+            return ""
 
     def send_file(self, local_path, remote_path):
         sftp = self.get_sftp()
