@@ -6,7 +6,6 @@ import ldap
 import smbclient
 from secrets import token_hex
 from winrm.protocol import Protocol
-import winrm
 
 HOSTS_FILE = "/etc/hosts"
 KRB5_FILE = "/etc/krb5.conf"
@@ -25,6 +24,7 @@ class WinRMConnector:
     shell_id = None
     token = None
     smb = None
+    letter = None
 
     def __init__(self, port=5986, secure=True):
         self.port = port
@@ -161,11 +161,18 @@ class WinRMConnector:
         smb.download(remote_path, local_path)
         return True
 
+    def get_letter(self):
+        if self.letter is not None:
+            return self.letter
+        self.letter = self.execute("powershell.exe $pwd.drive.name")[:-2]
+        return self.letter
+
     def get_smb_connection(self):
         if self.smb is None:
             self.connect_smb()
         return self.smb
 
-    def connect_smb(self, share="C$"):
+    def connect_smb(self):
         os.environ["KRB5CCNAME"] = self.path
+        share = self.get_letter() + "$"
         self.smb = smbclient.SambaClient(server=self.fqdn.upper(), share=share, kerberos=True, domain=self.domain)
