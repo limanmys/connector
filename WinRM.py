@@ -176,3 +176,6 @@ class WinRMConnector:
         os.environ["KRB5CCNAME"] = self.path
         share = self.get_letter() + "$"
         self.smb = smbclient.SambaClient(server=self.fqdn.upper(), share=share, kerberos=True, domain=self.domain)
+
+    def get_path(self):
+        return self.path

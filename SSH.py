@@ -33,6 +33,7 @@ class SSHConnector:
         self.password = None
 
         # Generate Random Token
+        print(self.shell.exec_command("hostname"))
         self.token = token_hex(16)
 
     def get_token(self):
@@ -43,7 +44,7 @@ class SSHConnector:
         try:
             return stdout.read().decode('ascii') + stderr.read().decode('ascii')
         except Exception as e:
-            return ""
+            return str(stderr.read())
 
     def send_file(self, local_path, remote_path):
         sftp = self.get_sftp()
@@ -59,3 +60,6 @@ class SSHConnector:
         if self.ftp is None:
             self.ftp = self.shell.open_sftp()
         return self.ftp
+
+    def get_path(self):
+        return None

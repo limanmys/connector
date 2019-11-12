@@ -2,6 +2,7 @@ from flask import Flask
 from flask import request
 from WinRM import WinRMConnector
 from SSH import SSHConnector
+from waitress import serve
 
 app = Flask("LIMAN")
 
@@ -41,7 +42,7 @@ def new_connection():
     connections[token] = connector
 
     # Simply return token to use
-    return {"token": token}, 200
+    return {"token": token, "ticket_path": connector.get_path()}, 200
 
 
 @app.route("/run", methods=['POST'])
@@ -124,4 +125,5 @@ def cleanup():
 
 if __name__ == "__main__":
     cleanup()
-    app.run(host='0.0.0.0')
+    #serve(app, host='0.0.0.0', port=5000)
+    app.run(host='127.0.0.1')
