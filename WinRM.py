@@ -86,7 +86,6 @@ class WinRMConnector:
     def setup_kerberos(self):
         # Delete Existing Configs from file.
         os.system("sed -i ':again;$!N;$!b again; s/%s = {[^}]*}//g' %s"% (self.domain.upper(), KRB5_FILE))
-        os.system("sed -i '/%s\\s/,/}$/d' %s" % (self.domain.upper(), KRB5_FILE))
         os.system("sed -i '/= %s/d' %s" % (self.domain.upper(), KRB5_FILE))
         
 
