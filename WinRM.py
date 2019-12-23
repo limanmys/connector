@@ -1,10 +1,11 @@
 import os
+import random
 import socket
 import subprocess
-import random
+from secrets import token_hex
+
 import ldap
 import smbclient
-from secrets import token_hex
 from winrm.protocol import Protocol
 
 HOSTS_FILE = "/etc/hosts"
@@ -25,10 +26,14 @@ class WinRMConnector:
     token = None
     smb = None
     letter = None
+    custom_ip = None
 
-    def __init__(self, port=5986, secure=True):
+    def __init__(self, port=5986, secure=True, domain=None, fqdn=None,custom_ip=None):
         self.port = port
         self.secure = secure
+        self.domain = domain
+        self.fqdn = fqdn
+        self.custom_ip = custom_ip
 
     def set_credentials(self, username, password, hostname):
         self.username = username
@@ -37,10 +42,11 @@ class WinRMConnector:
 
     def init(self):
         # Bind LDAP Anonymously to retrieve FQDN and domain name.
-        domain, fqdn = self.bind_ldap()
-
+        if self.domain is None or self.fqdn is None:
+            self.domain, self.fqdn = self.bind_ldap()
+        
         # Check If Bind Failed.
-        if domain is False or fqdn is False:
+        if self.domain is False or self.fqdn is False:
             return {"error": "Couldn't access to ldap"}, 408
 
         # Setup DNS
@@ -122,8 +128,11 @@ class WinRMConnector:
         return True, path
 
     def add_dns(self):
-        # Get ip from hostname.
-        hostname = socket.gethostbyname(self.hostname)
+        if self.custom_ip is None:
+            # Get ip from hostname.
+            hostname = socket.gethostbyname(self.hostname)
+        else:
+            hostname = self.custom_ip
 
         # Delete Existing Ones if any.
         os.system("sed -i '/.*%s/d' %s" % (self.fqdn.upper(), HOSTS_FILE))
@@ -134,15 +143,22 @@ class WinRMConnector:
 
     def winrm_init(self):
         url = self.hostname + ":" + str(self.port) + "/wsman"
-        endpoint = "https://" + url if self.secure else "http://" + url
+        endpoint = "https://" + url if str(self.port) is "5986" else "https://" + url
         os.environ["KRB5CCNAME"] = self.path
+        override = None
+        if self.custom_ip is not None:
+            override = self.custom_ip
+
+        #domain_addr = self.domain if self.custom_ip is None else self.custom_ip
         p = Protocol(
             endpoint=endpoint,
             transport='kerberos',
             username=self.username + '@' + self.domain.upper(),
             server_cert_validation='ignore',
-            kerberos_delegation=True
+            kerberos_delegation=True,
+            kerberos_hostname_override = override
         )
+
         self.shell_id = p.open_shell()
         self.shell = p
 

@@ -1,8 +1,8 @@
-from flask import Flask
-from flask import request
-from WinRM import WinRMConnector
+from flask import Flask, request
+
 from SSH import SSHConnector
 from waitress import serve
+from WinRM import WinRMConnector
 
 app = Flask("LIMAN")
 
@@ -17,13 +17,18 @@ def new_connection():
     hostname = request.values.get("hostname")
     password = request.values.get("password")
     connection_type = request.values.get("connection_type")
+    domain = request.values.get("domain")
+    fqdn = request.values.get("fqdn")
+    custom_ip = request.values.get("custom_ip")
+    port = request.values.get("port")
+    port = port if port is not None else "5986"
 
     # Validate Inputs.
     if username is None or password is None or hostname is None or connection_type is None:
         return {"error": "Missing Parameters"}, 400
 
     if connection_type == "winrm":
-        connector = WinRMConnector()
+        connector = WinRMConnector(domain=domain, fqdn= fqdn, custom_ip=custom_ip,port=port)
     elif connection_type == "ssh":
         connector = SSHConnector()
     else:
