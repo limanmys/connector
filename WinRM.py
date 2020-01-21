@@ -9,7 +9,6 @@ import smbclient
 from winrm.protocol import Protocol
 
 HOSTS_FILE = "/etc/hosts"
-KRB5_FILE = "/etc/krb5.conf"
 KINIT_PATH = "/usr/bin/kinit"
 
 
@@ -52,9 +51,6 @@ class WinRMConnector:
         # Setup DNS
         self.add_dns()
 
-        # Make Kerberos Configuration.
-        self.setup_kerberos()
-
         # Retrieve Kerberos Key from user.
         result, self.path = self.kinit()
 
@@ -89,17 +85,26 @@ class WinRMConnector:
         self.fqdn = fqdn
         return domain, fqdn
 
-    def setup_kerberos(self):
-        # Delete Existing Configs from file.
-        os.system("sed -i ':again;$!N;$!b again; s/%s = {[^}]*}//g' %s"% (self.domain.upper(), KRB5_FILE))
-        os.system("sed -i '/= %s/d' %s" % (self.domain.upper(), KRB5_FILE))
-        
+    def setup_kerberos(self,path):
 
-        # Add New Configuration to the file.
-        os.system("sed -i '/\[realms\]/a \\\n %s = { \\n kdc = %s \\n admin_server = %s \\n}' %s"
-                  % (self.domain.upper(), self.fqdn.upper(), self.fqdn.upper(), KRB5_FILE))
-        os.system("echo '." + self.domain.lower() + " = " + self.domain.upper() + "' | tee -a %s" % KRB5_FILE)
-        os.system("echo '" + self.domain.lower() + " = " + self.domain.upper() + "' | tee -a %s" % KRB5_FILE)
+        f = open(path, "a")
+        config_string = """
+[libdefaults]
+    dns_lookup_realm = false
+    dns_lookup_kdc = false
+[realms]
+ %s = { 
+ kdc = %s 
+ admin_server = %s 
+}
+
+[domain_realm]
+        
+.%s = %s
+%s = %s
+""" % (self.domain.upper(), self.fqdn.upper(), self.fqdn.upper() , self.domain.lower() , self.domain.upper() , self.domain.lower() , self.domain.upper())
+        f.write(config_string)
+        f.close()
 
     def kinit(self):
         # Generate random key id for path.
@@ -110,6 +115,15 @@ class WinRMConnector:
 
         # Set OS Environment to use multiple keys.
         os.environ["KRB5CCNAME"] = path
+
+        # Prepare Config Path
+        config_path = '/tmp/krb5_%s.conf' % key_id
+
+        # Create krb5.conf file.
+        self.setup_kerberos(config_path)
+
+        # Set OS Environment to use multiple keys.
+        os.environ["KRB5_CONFIG"] = config_path
 
         # Execute kinit with given values.
         cmd = [KINIT_PATH, '%s@%s' % (self.username, self.domain.upper())]

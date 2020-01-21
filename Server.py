@@ -3,7 +3,7 @@ from flask import Flask, request
 from SSH import SSHConnector
 from waitress import serve
 from WinRM import WinRMConnector
-
+import os
 app = Flask("LIMAN")
 
 connections = {}
@@ -89,7 +89,6 @@ def send_file():
     try:
         flag = connection.send_file(local_path, remote_path)
     except Exception as e:
-        print(str(e))
         flag = False
     if flag is True:
         return {"output": "ok"}, 200
@@ -116,19 +115,9 @@ def get_file():
         return {"output": "no"}, 201
 
 
-def cleanup():
-    with open("/etc/krb5.conf", "w") as file:
-        file.write("""[libdefaults]
-    dns_lookup_realm = false
-    dns_lookup_kdc = false
-[realms]
-         
-[domain_realm]
-        
-""")
-
-
 if __name__ == "__main__":
-    cleanup()
+    #Clean up old configs and tickets.
+    os.system("rm /tmp/krb5*")
+
     #serve(app, host='0.0.0.0', port=5000)
     app.run(host='127.0.0.1')

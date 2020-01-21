@@ -33,7 +33,6 @@ class SSHConnector:
         self.password = None
 
         # Generate Random Token
-        print(self.shell.exec_command("hostname"))
         self.token = token_hex(16)
 
     def get_token(self):
