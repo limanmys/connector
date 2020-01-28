@@ -45,7 +45,7 @@ class SSHConnector:
         self.keep_yourself_alive()
         _, stdout, stderr = self.shell.exec_command(command)
         try:
-            return stdout.read().decode('ascii') + stderr.read().decode('ascii')
+            return stdout.read().decode('utf-8') + stderr.read().decode('utf-8')
         except Exception as e:
             return str(stderr.read())
 
