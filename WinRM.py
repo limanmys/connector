@@ -2,6 +2,7 @@ import os
 import random
 import socket
 import subprocess
+import time
 from secrets import token_hex
 
 import ldap
@@ -26,6 +27,7 @@ class WinRMConnector:
     smb = None
     letter = None
     custom_ip = None
+    heartbeat = None
 
     def __init__(self, port=5986, secure=True, domain=None, fqdn=None,custom_ip=None):
         self.port = port
@@ -40,6 +42,8 @@ class WinRMConnector:
         self.hostname = hostname
 
     def init(self):
+        self.keep_yourself_alive()
+
         # Bind LDAP Anonymously to retrieve FQDN and domain name.
         if self.domain is None or self.fqdn is None:
             self.domain, self.fqdn = self.bind_ldap()
@@ -178,16 +182,19 @@ class WinRMConnector:
         self.shell = p
 
     def execute(self, command):
+        self.keep_yourself_alive()
         command_id = self.shell.run_command(self.shell_id, command)
         std_out, std_err, _ = self.shell.get_command_output(self.shell_id, command_id)
         return std_out.decode("utf-8") + std_err.decode("utf-8")
 
     def send_file(self, local_path, remote_path):
+        self.keep_yourself_alive()
         smb = self.get_smb_connection()
         smb.upload(local_path, remote_path)
         return True
 
     def get_file(self, local_path, remote_path):
+        self.keep_yourself_alive()
         smb = self.get_smb_connection()
         smb.download(remote_path, local_path)
         return True
@@ -210,3 +217,16 @@ class WinRMConnector:
 
     def get_path(self):
         return self.path
+
+    def keep_yourself_alive(self):
+        self.heartbeat = time.time()
+
+    def keep_alive(self):
+        if time.time() - self.heartbeat > 300:
+            return False
+        else:
+            return True
+
+    def close(self):
+        print("CLOSING " + self.username + "@" + self.hostname)
+        self.shell.close_shell(self.shell_id)

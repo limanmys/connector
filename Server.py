@@ -1,9 +1,13 @@
 from flask import Flask, request
 
 from SSH import SSHConnector
-from waitress import serve
+from SSHTunnel import SSHTunnelConnector
+#from waitress import serve
 from WinRM import WinRMConnector
 import os
+import time
+import sys
+import threading
 app = Flask("LIMAN")
 
 connections = {}
@@ -22,7 +26,6 @@ def new_connection():
     custom_ip = request.values.get("custom_ip")
     port = request.values.get("port")
     port = port if port is not None else "5986"
-
     # Validate Inputs.
     if username is None or password is None or hostname is None or connection_type is None:
         return {"error": "Missing Parameters"}, 400
@@ -31,6 +34,8 @@ def new_connection():
         connector = WinRMConnector(domain=domain, fqdn= fqdn, custom_ip=custom_ip,port=port)
     elif connection_type == "ssh":
         connector = SSHConnector()
+    elif connection_type == "ssh_tunnel":
+        connector = SSHTunnelConnector(request.values.get("remote_port"))
     else:
         return {"error": "Unknown Type"}, 404
 
@@ -61,6 +66,17 @@ def execute_command():
 
     return {"output": connection.execute(command)}, 200
 
+
+@app.route("/stop", methods=['POST'])
+def stop_connector():
+    token = request.values.get("token")
+    try:
+        connection = connections[token]
+    except Exception:
+        return {"error": "Token Not found"}, 404
+    connection.close()
+    del connections[token]
+    return {"output": "ok"}, 200
 
 @app.route("/verify", methods=['POST'])
 def verify_token():
@@ -114,10 +130,28 @@ def get_file():
     else:
         return {"output": "no"}, 201
 
+def run():
+        global connections
+        while True:
+            time.sleep(3)
+            for connection in list(connections):
+                if not connections[connection].keep_alive():
+                    print("CLOSING " + connection)
+                    try:
+                        sys.stderr = open(os.devnull, 'w')
+                        connections[connection].close()
+                    except Exception as e:
+                        pass
+                    sys.stderr = sys.__stderr__
+                    del connections[connection]
 
 if __name__ == "__main__":
-    #Clean up old configs and tickets.
-    os.system("rm /tmp/krb5*")
 
-    #serve(app, host='0.0.0.0', port=5000)
-    app.run(host='127.0.0.1')
+    #Clean up old configs and tickets.
+    os.system("rm /tmp/krb5* 2>/dev/null 1>/dev/null")
+
+    thread = threading.Thread(target=run)
+    thread.start()
+    #Start
+    app.run(host='127.0.0.1',threaded=True)
+
