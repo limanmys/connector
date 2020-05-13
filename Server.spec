@@ -4,7 +4,7 @@ block_cipher = None
 
 
 a = Analysis(['Server.py'],
-             pathex=['/liman/connector'],
+             pathex=['/liman/liman-connector'],
              binaries=[],
              datas=[],
              hiddenimports=[],

@@ -25,9 +25,8 @@ class SSHConnector:
 
         client = paramiko.SSHClient()
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-
         try:
-            client.connect(self.hostname, int(self.port), self.username, self.password)
+            client.connect(hostname=self.hostname,username=self.username, password=self.password,port=self.port)
         except Exception as e:
             return {"error": str(e)}, 403
 

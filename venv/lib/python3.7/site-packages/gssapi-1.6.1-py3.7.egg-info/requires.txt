@@ -1,2 +1,0 @@
-decorator
-six>=1.4.0

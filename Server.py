@@ -8,6 +8,10 @@ import os
 import time
 import sys
 import threading
+import warnings
+from cryptography.utils import DeprecatedIn25
+warnings.simplefilter('ignore', DeprecatedIn25)
+
 app = Flask("LIMAN")
 
 connections = {}
@@ -29,11 +33,10 @@ def new_connection():
     # Validate Inputs.
     if username is None or password is None or hostname is None or connection_type is None:
         return {"error": "Missing Parameters"}, 400
-
     if connection_type == "winrm":
         connector = WinRMConnector(domain=domain, fqdn= fqdn, custom_ip=custom_ip,port=port)
     elif connection_type == "ssh":
-        connector = SSHConnector()
+        connector = SSHConnector(port=port)
     elif connection_type == "ssh_tunnel":
         connector = SSHTunnelConnector(request.values.get("remote_port"))
     else:
