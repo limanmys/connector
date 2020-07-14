@@ -5,7 +5,6 @@ import subprocess
 import time
 from secrets import token_hex
 
-import ldap
 import smbclient
 from winrm.protocol import Protocol
 
@@ -46,8 +45,8 @@ class WinRMConnector:
 
         # Bind LDAP Anonymously to retrieve FQDN and domain name.
         if self.domain is None or self.fqdn is None:
-            self.domain, self.fqdn = self.bind_ldap()
-        
+            self.domain, self.fqdn = self.get_domain_info()
+
         # Check If Bind Failed.
         if self.domain is False or self.fqdn is False:
             return {"error": "Couldn't access to ldap"}, 408
@@ -71,23 +70,16 @@ class WinRMConnector:
     def get_token(self):
         return self.token
 
+    def get_domain_info(self):
+        data = subprocess.getoutput('samba-tool domain info ' + self.hostname + ' | grep "Domain\|DC name"')
+        arr = {}
+        for row in data.split('\n'):
+            first, second = row.split(':')
+            arr[first.strip()] = second.strip()
+        return arr["Domain"], arr["DC name"]
+
     def __del__(self):
         self.shell.close_shell(self.shell_id)
-
-    def bind_ldap(self):
-        # Bind LDAP Anonymously to retrieve FQDN and domain name.
-        try:
-            obj = ldap.initialize("ldap://%s" % self.hostname)
-            obj.simple_bind()
-            data = obj.read_rootdse_s()
-            domain = data["rootDomainNamingContext"][0].decode("UTF-8").upper().replace("DC=", "").replace(",", ".")
-            fqdn = data["dnsHostName"][0].decode("UTF-8")
-        except Exception:
-            domain = False
-            fqdn = False
-        self.domain = domain
-        self.fqdn = fqdn
-        return domain, fqdn
 
     def setup_kerberos(self,path):
 
@@ -162,7 +154,7 @@ class WinRMConnector:
 
     def winrm_init(self):
         url = self.hostname + ":" + str(self.port) + "/wsman"
-        endpoint = "https://" + url if str(self.port) is "5986" else "https://" + url
+        endpoint = "https://" + url if str(self.port) == "5986" else "https://" + url
         os.environ["KRB5CCNAME"] = self.path
         override = None
         if self.custom_ip is not None:

@@ -9,13 +9,10 @@ import time
 import sys
 import threading
 import warnings
-from cryptography.utils import DeprecatedIn25
-warnings.simplefilter('ignore', DeprecatedIn25)
 
 app = Flask("LIMAN")
 
 connections = {}
-
 
 @app.route("/new", methods=['POST'])
 def new_connection():
